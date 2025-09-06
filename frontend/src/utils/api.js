@@ -1,7 +1,8 @@
-// utils/api.js
+// frontend/src/utils/api.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Use environment variable or fallback to production URL
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://d-nothi-backend.onrender.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -40,6 +41,7 @@ export const authAPI = {
   register: (userData) => api.post('/api/auth/register', userData),
   getCurrentUser: () => api.get('/api/auth/me'),
 };
+
 
 export const usersAPI = {
   getUsers: (params) => api.get('/api/users', { params }),

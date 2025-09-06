@@ -1,4 +1,4 @@
-// config/database.js
+// backend/config/database.js
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
@@ -18,8 +18,21 @@ const dbConfig = {
   queueLimit: 0
 };
 
+// Remove the invalid options that MySQL2 is complaining about
+const validConfig = {
+  host: dbConfig.host,
+  port: dbConfig.port,
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
+  ssl: dbConfig.ssl,
+  connectTimeout: dbConfig.connectTimeout,
+  connectionLimit: dbConfig.connectionLimit,
+  queueLimit: dbConfig.queueLimit
+};
+
 // Create connection pool
-const pool = mysql.createPool(dbConfig);
+const pool = mysql.createPool(validConfig);
 
 // Test connection
 const testConnection = async () => {
