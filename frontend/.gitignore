@@ -1,0 +1,6 @@
+# Already included from create-react-app
+node_modules/
+.env
+build/
+.DS_Store
+.eslintcache
