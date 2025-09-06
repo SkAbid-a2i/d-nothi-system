@@ -43,7 +43,7 @@ app.use('/api/', apiLimiter);
 // CORS configuration - FIXED
 const allowedOrigins = [
   'https://d-nothi-system.vercel.app',
-  'https://d-nothi-system-ht4ye6y3b-skabid-5302s-projects.vercel.app',
+  'd-nothi-system-dsz2bvs7n-skabid-5302s-projects.vercel.app',
   'http://localhost:3000'
 ];
 
