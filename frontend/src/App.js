@@ -1,110 +1,121 @@
-// src/App.js
-import React from 'react';
+// frontend/src/App.js
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box } from '@mui/material';
+import { CssBaseline, Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout/Layout';
 import Login from './pages/Auth/Login';
 import Dashboard from './pages/Dashboard/Dashboard';
-import Tasks from './pages/Tasks/Tasks';
-import Leaves from './pages/Leaves/Leaves';
-import Users from './pages/Admin/Users';
-import AdminPanel from './pages/Admin/AdminPanel';
-import Reports from './pages/Reports/Reports';
 
-const ProtectedRoute = ({ children, requiredRoles = [] }) => {
-  const { isAuthenticated, user } = useAuth();
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+// Simple loading component
+const LoadingScreen = () => (
+  <Box
+    display="flex"
+    flexDirection="column"
+    alignItems="center"
+    justifyContent="center"
+    minHeight="100vh"
+  >
+    <CircularProgress size={60} />
+    <Typography variant="h6" sx={{ mt: 2 }}>
+      Loading D-Nothi System...
+    </Typography>
+  </Box>
+);
+
+// Error boundary component
+const ErrorDisplay = ({ error }) => (
+  <Box
+    display="flex"
+    flexDirection="column"
+    alignItems="center"
+    justifyContent="center"
+    minHeight="100vh"
+    p={3}
+  >
+    <Alert severity="error" sx={{ maxWidth: 600 }}>
+      <Typography variant="h6" gutterBottom>
+        Application Error
+      </Typography>
+      <Typography variant="body2">
+        {error.message}
+      </Typography>
+      <Typography variant="body2" sx={{ mt: 1 }}>
+        Please check the console for more details.
+      </Typography>
+    </Alert>
+  </Box>
+);
+
+// Main App Component
+function AppContent() {
+  const { isAuthenticated, loading, error } = useAuth();
+  const [appError, setAppError] = useState(null);
+
+  useEffect(() => {
+    // Global error handler
+    const handleError = (event) => {
+      setAppError(event.error || new Error('Unknown error occurred'));
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleError);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleError);
+    };
+  }, []);
+
+  if (appError) {
+    return <ErrorDisplay error={appError} />;
   }
 
-  if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+  if (loading) {
+    return <LoadingScreen />;
   }
-
-  return children;
-};
-
-const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
 
   return (
-    <Routes>
-      <Route 
-        path="/login" 
-        element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} 
-      />
-      <Route 
-        path="/" 
-        element={<Navigate to="/dashboard" replace />} 
-      />
-      <Route 
-        path="/dashboard" 
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Dashboard />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/tasks" 
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Tasks />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/leaves" 
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Leaves />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/users" 
-        element={
-          <ProtectedRoute requiredRoles={['SystemAdmin', 'Admin']}>
-            <Layout>
-              <Users />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/panel" 
-        element={
-          <ProtectedRoute requiredRoles={['SystemAdmin', 'Admin']}>
-            <Layout>
-              <AdminPanel />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/reports" 
-        element={
-          <ProtectedRoute requiredRoles={['SystemAdmin', 'Admin', 'Supervisor']}>
-            <Layout>
-              <Reports />
-            </Layout>
-          </ProtectedRoute>
-        } 
-      />
-    </Routes>
+    <Router>
+      <Routes>
+        <Route 
+          path="/login" 
+          element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} 
+        />
+        <Route 
+          path="/" 
+          element={<Navigate to="/dashboard" replace />} 
+        />
+        <Route 
+          path="/dashboard" 
+          element={
+            isAuthenticated ? (
+              <Layout>
+                <Dashboard />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        {/* Add a fallback route */}
+        <Route 
+          path="*" 
+          element={
+            <Box sx={{ p: 3 }}>
+              <Alert severity="info">
+                Page not found. Please check the URL or navigate using the menu.
+              </Alert>
+            </Box>
+          } 
+        />
+      </Routes>
+    </Router>
   );
-};
+}
 
 function App() {
   const theme = createTheme({
@@ -117,9 +128,6 @@ function App() {
         main: '#dc004e',
       },
     },
-    typography: {
-      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    },
   });
 
   return (
@@ -127,11 +135,7 @@ function App() {
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
         <AuthProvider>
-          <Router>
-            <Box sx={{ display: 'flex' }}>
-              <AppRoutes />
-            </Box>
-          </Router>
+          <AppContent />
         </AuthProvider>
       </SnackbarProvider>
     </ThemeProvider>

@@ -1,5 +1,5 @@
-// src/pages/Auth/Login.js
-import React, { useState } from 'react';
+// frontend/src/pages/Auth/Login.js
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -7,7 +7,8 @@ import {
   Button,
   Typography,
   Box,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -17,14 +18,19 @@ const Login = () => {
     email: '',
     password: ''
   });
-  const { login, loading, error } = useAuth();
+  const { login, loading, error, clearError } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    clearError();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    if (error) clearError();
   };
 
   const handleSubmit = async (e) => {
@@ -73,6 +79,7 @@ const Login = () => {
               autoFocus
               value={formData.email}
               onChange={handleChange}
+              disabled={loading}
             />
             <TextField
               margin="normal"
@@ -85,6 +92,7 @@ const Login = () => {
               autoComplete="current-password"
               value={formData.password}
               onChange={handleChange}
+              disabled={loading}
             />
             <Button
               type="submit"
@@ -93,9 +101,20 @@ const Login = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Signing In...' : 'Sign In'}
+              {loading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
           </Box>
+
+          {/* Test credentials reminder */}
+          <Alert severity="info" sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              <strong>Test Credentials:</strong><br />
+              sysadmin@dnothi.com / password123<br />
+              admin@dnothi.com / password123<br />
+              supervisor@dnothi.com / password123<br />
+              agent@dnothi.com / password123
+            </Typography>
+          </Alert>
         </Paper>
       </Box>
     </Container>
