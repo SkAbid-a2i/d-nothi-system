@@ -1,4 +1,4 @@
-// utils/constants.js
+// frontend/src/utils/constants.js
 export const USER_ROLES = {
   SYSTEM_ADMIN: 'SystemAdmin',
   ADMIN: 'Admin',

@@ -1,4 +1,4 @@
-// middleware/errorHandler.js
+// backend/middleware/errorHandler.js
 const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
 
@@ -17,6 +17,11 @@ const errorHandler = (err, req, res, next) => {
 
   if (err.name === 'TokenExpiredError') {
     return res.status(401).json({ message: 'Token expired' });
+  }
+
+  // CORS errors
+  if (err.message.includes('CORS')) {
+    return res.status(403).json({ message: 'CORS policy error', details: err.message });
   }
 
   // Default error

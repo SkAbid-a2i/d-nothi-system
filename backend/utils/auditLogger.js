@@ -1,4 +1,4 @@
-// utils/auditLogger.js
+// backend/utils/auditLogger.js
 const pool = require('../config/database');
 
 const createAuditLog = async (userId, tableName, actionType, recordId, oldValues, newValues, ipAddress, userAgent) => {

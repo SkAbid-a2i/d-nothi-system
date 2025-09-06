@@ -42,7 +42,6 @@ export const authAPI = {
   getCurrentUser: () => api.get('/api/auth/me'),
 };
 
-
 export const usersAPI = {
   getUsers: (params) => api.get('/api/users', { params }),
   getUser: (id) => api.get(`/api/users/${id}`),

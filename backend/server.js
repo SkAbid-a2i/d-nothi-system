@@ -1,10 +1,10 @@
 // backend/server.js
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const { authLimiter, apiLimiter } = require('./middleware/rateLimit');
 require('dotenv').config();
 
@@ -40,12 +40,27 @@ app.use('/api/auth', authLimiter);
 // General rate limiting
 app.use('/api/', apiLimiter);
 
-// CORS configuration - UPDATED FOR PRODUCTION
+// CORS configuration - FIXED
+const allowedOrigins = [
+  'https://d-nothi-system.vercel.app',
+  'https://d-nothi-system-ht4ye6y3b-skabid-5302s-projects.vercel.app',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://d-nothi-system.vercel.app',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
 // Body parsing middleware
@@ -53,7 +68,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Root route - ADD THIS
+// Root route
 app.get('/', (req, res) => {
   res.json({ 
     message: 'D-Nothi Backend API',
@@ -86,10 +101,10 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ message: 'API route not found' });
 });
 
-// Serve frontend in production - ADD THIS
+// Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
   // Serve static files from frontend build
-  app.use(express.static('../frontend/build'));
+  app.use(express.static(path.join(__dirname, '../frontend/build')));
   
   // Handle React routing, return all requests to React app
   app.get('*', (req, res) => {
@@ -105,4 +120,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Allowed CORS origins: ${allowedOrigins.join(', ')}`);
 });

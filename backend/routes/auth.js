@@ -1,26 +1,17 @@
-// routes/auth.js
+// backend/routes/auth.js
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/database');
 const { createAuditLog } = require('../utils/auditLogger');
+const { registerValidation, loginValidation, handleValidationErrors } = require('../middleware/validation');
 
 const router = express.Router();
 
 // Register
-router.post('/register', [
-  body('employee_id').notEmpty().withMessage('Employee ID is required'),
-  body('name').notEmpty().withMessage('Name is required'),
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
-], async (req, res) => {
+router.post('/register', registerValidation, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { employee_id, name, email, password, role = 'Agent', department, designation } = req.body;
 
     // Check if user already exists
@@ -54,16 +45,8 @@ router.post('/register', [
 });
 
 // Login
-router.post('/login', [
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').notEmpty().withMessage('Password is required')
-], async (req, res) => {
+router.post('/login', loginValidation, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { email, password } = req.body;
 
     // Find user

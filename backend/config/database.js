@@ -6,33 +6,18 @@ const dbConfig = {
   host: process.env.DB_HOST,
   port: process.env.DB_PORT || 4000,
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  password: process.env.DB_USER,
   database: process.env.DB_NAME,
   ssl: {
     rejectUnauthorized: true
   },
   connectTimeout: 60000,
-  acquireTimeout: 60000,
-  timeout: 60000,
   connectionLimit: 10,
   queueLimit: 0
 };
 
-// Remove the invalid options that MySQL2 is complaining about
-const validConfig = {
-  host: dbConfig.host,
-  port: dbConfig.port,
-  user: dbConfig.user,
-  password: dbConfig.password,
-  database: dbConfig.database,
-  ssl: dbConfig.ssl,
-  connectTimeout: dbConfig.connectTimeout,
-  connectionLimit: dbConfig.connectionLimit,
-  queueLimit: dbConfig.queueLimit
-};
-
 // Create connection pool
-const pool = mysql.createPool(validConfig);
+const pool = mysql.createPool(dbConfig);
 
 // Test connection
 const testConnection = async () => {

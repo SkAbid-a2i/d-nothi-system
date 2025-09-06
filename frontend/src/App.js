@@ -1,14 +1,21 @@
 // frontend/src/App.js
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box, CircularProgress, Typography, Alert } from '@mui/material';
+import { CssBaseline, Box, CircularProgress, Typography, Alert, Button } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Layout from './components/Layout/Layout';
+import ErrorBoundary from './components/Common/ErrorBoundary';
 import Login from './pages/Auth/Login';
 import Dashboard from './pages/Dashboard/Dashboard';
+import Tasks from './pages/Tasks/Tasks';
+import Leaves from './pages/Leaves/Leaves';
+import Users from './pages/Admin/Users';
+import AdminPanel from './pages/Admin/AdminPanel';
+import AuditLogs from './pages/Admin/AuditLogs';
+import Reports from './pages/Reports/Reports';
+import Profile from './pages/Profile/Profile';
 
 // Simple loading component
 const LoadingScreen = () => (
@@ -26,8 +33,8 @@ const LoadingScreen = () => (
   </Box>
 );
 
-// Error boundary component
-const ErrorDisplay = ({ error }) => (
+// Error display component
+const ErrorDisplay = ({ error, onRetry }) => (
   <Box
     display="flex"
     flexDirection="column"
@@ -36,28 +43,54 @@ const ErrorDisplay = ({ error }) => (
     minHeight="100vh"
     p={3}
   >
-    <Alert severity="error" sx={{ maxWidth: 600 }}>
+    <Alert severity="error" sx={{ maxWidth: 600, mb: 2 }}>
       <Typography variant="h6" gutterBottom>
         Application Error
       </Typography>
       <Typography variant="body2">
         {error.message}
       </Typography>
-      <Typography variant="body2" sx={{ mt: 1 }}>
-        Please check the console for more details.
-      </Typography>
     </Alert>
+    <Button variant="contained" onClick={onRetry}>
+      Try Again
+    </Button>
   </Box>
 );
 
+// Protected route component
+const ProtectedRoute = ({ children, requiredRoles = [] }) => {
+  const { isAuthenticated, user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          Access denied. You don't have permission to view this page.
+        </Alert>
+      </Box>
+    );
+  }
+
+  return children;
+};
+
 // Main App Component
 function AppContent() {
-  const { isAuthenticated, loading, error } = useAuth();
-  const [appError, setAppError] = useState(null);
+  const { isAuthenticated, loading, error, clearError } = useAuth();
+  const [appError, setAppError] = React.useState(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Global error handler
     const handleError = (event) => {
+      console.error('Global error:', event.error);
       setAppError(event.error || new Error('Unknown error occurred'));
     };
 
@@ -70,8 +103,14 @@ function AppContent() {
     };
   }, []);
 
+  const handleRetry = () => {
+    setAppError(null);
+    clearError();
+    window.location.reload();
+  };
+
   if (appError) {
-    return <ErrorDisplay error={appError} />;
+    return <ErrorDisplay error={appError} onRetry={handleRetry} />;
   }
 
   if (loading) {
@@ -92,16 +131,67 @@ function AppContent() {
         <Route 
           path="/dashboard" 
           element={
-            isAuthenticated ? (
-              <Layout>
-                <Dashboard />
-              </Layout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
           } 
         />
-        {/* Add a fallback route */}
+        <Route 
+          path="/tasks" 
+          element={
+            <ProtectedRoute>
+              <Tasks />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/leaves" 
+          element={
+            <ProtectedRoute>
+              <Leaves />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/users" 
+          element={
+            <ProtectedRoute requiredRoles={['SystemAdmin', 'Admin']}>
+              <Users />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/panel" 
+          element={
+            <ProtectedRoute requiredRoles={['SystemAdmin', 'Admin']}>
+              <AdminPanel />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/audit-logs" 
+          element={
+            <ProtectedRoute requiredRoles={['SystemAdmin', 'Admin']}>
+              <AuditLogs />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/reports" 
+          element={
+            <ProtectedRoute requiredRoles={['SystemAdmin', 'Admin', 'Supervisor']}>
+              <Reports />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } 
+        />
         <Route 
           path="*" 
           element={
@@ -128,17 +218,22 @@ function App() {
         main: '#dc004e',
       },
     },
+    typography: {
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    },
   });
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <SnackbarProvider maxSnack={3}>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
-      </SnackbarProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <SnackbarProvider maxSnack={3}>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </SnackbarProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

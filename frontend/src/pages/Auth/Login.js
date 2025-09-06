@@ -8,17 +8,20 @@ import {
   Typography,
   Box,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Collapse
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import ApiTester from '../../components/Common/ApiTester';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const { login, loading, error, clearError } = useAuth();
+  const [showDebug, setShowDebug] = useState(false);
+  const { login, loading, error, clearError, apiStatus } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,10 +47,10 @@ const Login = () => {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
+    <Container component="main" maxWidth="md">
       <Box
         sx={{
-          marginTop: 8,
+          marginTop: 4,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -60,6 +63,12 @@ const Login = () => {
           <Typography component="h2" variant="h5" align="center" gutterBottom>
             Sign In
           </Typography>
+
+          {apiStatus === 'unhealthy' && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Unable to connect to server. Please check your connection.
+            </Alert>
+          )}
           
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -115,6 +124,20 @@ const Login = () => {
               agent@dnothi.com / password123
             </Typography>
           </Alert>
+
+          {/* Debug toggle */}
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Button 
+              size="small" 
+              onClick={() => setShowDebug(!showDebug)}
+            >
+              {showDebug ? 'Hide Debug Info' : 'Show Debug Info'}
+            </Button>
+          </Box>
+
+          <Collapse in={showDebug}>
+            <ApiTester />
+          </Collapse>
         </Paper>
       </Box>
     </Container>
